@@ -9,8 +9,8 @@ from fastapi.openapi.docs import (
 app = FastAPI(docs_url=None, redoc_url=None)
 
 hotels = [
-    {"id": 1, "title": "Sochi"},
-    {"id": 2, "title": "Dubai"},
+    {"id": 1, "title": "Sochi", "name": "sochi"},
+    {"id": 2, "title": "Dubai", "name": "dubai"},
 ]
 
 @app.get("/hotels")
@@ -28,6 +28,36 @@ def get_hotels(
     return hotels_
 
 
+@app.put("/hotels/{hotel_id}")
+def put_hotel(
+    hotel_id: int,
+    title: str = Body(embed=True),
+    name: str = Body(embed=True),
+):
+    global hotels
+    for hotel in hotels:
+        if hotel['id'] == hotel_id:
+            hotel['title'] = title
+            hotel['name'] = name
+
+    return {"status": 'OK'}
+
+
+@app.patch("/hotels/{hotel_id}")
+def patch_hotel(
+    hotel_id: int,
+    title: str | None = Body(embed=True, default=None),
+    name: str | None = Body(embed=True, default=None),
+):
+    global hotels
+    for hotel in hotels:
+        if hotel['id'] == hotel_id:
+            hotel['title'] = title if title else hotel['title']
+            hotel['name'] = name if name else hotel['name']
+
+    return {"status": 'OK'}
+
+
 @app.delete("/hotels/{hotel_id}")
 def delete_hotel(hotel_id: int):
     global hotels
@@ -42,7 +72,8 @@ def create_hotel(
     global hotels
     hotels.append({
         "id": hotels[-1]["id"] + 1,
-        "title": title
+        "title": title,
+        "name": ''
     })
     return {"status": "OK"}
 
