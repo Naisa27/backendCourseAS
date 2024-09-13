@@ -43,7 +43,11 @@ def put_hotel(
     return {"status": 'OK'}
 
 
-@app.patch("/hotels/{hotel_id}")
+@app.patch(
+    "/hotels/{hotel_id}",
+    summary="Частичное обновление данных об отеле",
+    description="<h1>Можно отправить name или title.</h1>"
+)
 def patch_hotel(
     hotel_id: int,
     title: str | None = Body(embed=True, default=None),
