@@ -18,15 +18,17 @@ router = APIRouter(prefix="/hotels", tags=["Отели"])
 def get_hotels(
     id: int | None = Query(default=None, dedescription="айдишник"),
     title: str | None = Query(default=None, description='Название отеля'),
+    page: int | None = Query(default=1, description="номер страницы"),
+    per_page: int | None = Query(default=3, description="количество отелей на странице")
 ):
     hotels_ = []
-    for hotel in hotels:
-        if id and hotel['id'] != id:
-            continue
-        if title and hotel['title'] != title:
-            continue
-        hotels_.append(hotel)
-    return hotels_
+    # for hotel in hotels:
+        # if id and hotel['id'] != id:
+        #     continue
+        # if title and hotel['title'] != title:
+        #     continue
+        # hotels_.append(hotel)
+    return hotels[per_page*(page-1):per_page*page]
 
 
 @router.put("/{hotel_id}")
