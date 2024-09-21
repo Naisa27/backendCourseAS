@@ -2,8 +2,8 @@ from typing import Annotated
 
 from fastapi import Query, Body, APIRouter, Depends
 
-from dependencies import PaginationParams, PaginationDep
-from schemas.hotels import Hotel, HotelPATCH
+from src.api.dependencies import PaginationParams, PaginationDep
+from src.schemas.hotels import Hotel, HotelPATCH
 
 hotels = [
     {"id": 1, "title": "Sochi", "name": "sochi"},
