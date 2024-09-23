@@ -14,13 +14,34 @@ async def get_hotels(
     pagination: PaginationDep,
     id: int | None = Query(default=None, dedescription="айдишник"),
     title: str | None = Query(default=None, description='Название отеля'),
+    location: str | None = Query(default=None, description='Адрес отеля'),
 ):
+    per_page = pagination.per_page or 5
     async with async_session_maker() as session:
-        query = select(HotelsOrm)
+        query = select( HotelsOrm )
+        if id:
+            query = query.filter_by(id=id)
+        if title:
+            # query = query.filter_by(title=title)
+            # query = query.where(HotelsOrm.title.like( f"%{ title }%"))
+            query = query.where(HotelsOrm.title.contains(title))
+        if location:
+            query = query.where(HotelsOrm.location.contains(location))
+
+        query = (
+            query
+            .limit( pagination.per_page )
+            .offset( pagination.per_page * (pagination.page - 1) )
+        )
+        # print( query.compile( engine,
+        #         compile_kwargs={
+        #             "literal_binds": True
+        #         }
+        #     )
+        # )
+
         result = await session.execute(query)
-        print(type(result), result)
         hotels = result.scalars().all()
-        print(type(hotels), hotels)
 
         return hotels
 
@@ -73,15 +94,15 @@ async def create_hotel(
             '1': {
                 "summary": 'Сочи',
                 'value': {
-                    "title": 'Отель Сочи 5 звезд у моря',
-                    "location": "ул. Моря, 1",
+                    "title": 'Отель 5 звезд у моря',
+                    "location": "Сочи, ул. Моря, 1",
                 }
             },
             '2': {
                 "summary": 'Дубай',
                 'value': {
-                    "title": 'Отель Дубай у фонтана',
-                    "location": "ул. Шейха, 2",
+                    "title": 'Отель у фонтана',
+                    "location": "Дубай, ул. Шейха, 2",
                 }
             },
         }
