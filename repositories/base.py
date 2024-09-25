@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, insert
 
 
 class BaseRepository:
@@ -7,7 +7,7 @@ class BaseRepository:
     def __init__(self, session):
         self.session = session
 
-    async def get_all(self):
+    async def get_all(self, *args, **kwargs):
         query = select( self.model )
         result = await self.session.execute( query )
         return result.scalars().all()
@@ -16,3 +16,8 @@ class BaseRepository:
         query = select( self.model ).filter_by(**filter_by)
         result = await self.session.execute( query )
         return result.scalars().one_or_none()
+
+    async def add(self, *args, **kwargs):
+        query = insert( self.model ).values( **kwargs ).returning(self.model)
+        # print(add_hotel_stmt.compile(engine, compile_kwargs={"literal_binds": True}))
+        return await self.session.scalar( query )

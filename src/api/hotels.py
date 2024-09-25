@@ -17,37 +17,14 @@ async def get_hotels(
     title: str | None = Query(default=None, description='Название отеля'),
     location: str | None = Query(default=None, description='Адрес отеля'),
 ):
+    per_page = pagination.per_page or 5
     async with async_session_maker() as session:
-        return await HotelsRepository(session).get_all()
-    # per_page = pagination.per_page or 5
-    #     query = select( HotelsOrm )
-    #     if title:
-    #         # query = query.filter_by(title=title)
-    #         # query = query.where(HotelsOrm.title.like( f"%{ title }%"))
-    #         # query = query.where(HotelsOrm.title.contains(title))
-    #         query = query.filter(func.lower(HotelsOrm.title).contains(title.strip().lower()))
-    #     if location:
-    #         # query = query.where(HotelsOrm.location.contains(location))
-    #         query = query.filter(func.lower(HotelsOrm.location).contains(location.strip().lower()))
-    #
-    #     query = (
-    #         query
-    #         .limit( pagination.per_page )
-    #         .offset( pagination.per_page * (pagination.page - 1) )
-    #     )
-    #     # print( query.compile( engine,
-    #     #         compile_kwargs={
-    #     #             "literal_binds": True
-    #     #         }
-    #     #     )
-    #     # )
-    #
-    #     result = await session.execute(query)
-    #     hotels = result.scalars().all()
-    #
-    #     return hotels
-
-    # return hotels_[pagination.per_page * (pagination.page-1):pagination.per_page*pagination.page]
+        return await HotelsRepository(session).get_all(
+            location=location,
+            title=title,
+            limit=per_page,
+            offset=per_page * (pagination.page - 1)
+        )
 
 
 @router.put("/{hotel_id}")
@@ -111,9 +88,7 @@ async def create_hotel(
     )
 ):
     async with async_session_maker() as session:
-        add_hotel_stmt = insert(HotelsOrm).values(**hotel_data.model_dump())
-        # print(add_hotel_stmt.compile(engine, compile_kwargs={"literal_binds": True}))
-        await session.execute(add_hotel_stmt)
+        hotel = await HotelsRepository(session).add(**hotel_data.model_dump())
         await session.commit()
 
-    return {"status": "OK"}
+    return {"status": "OK", "data": hotel}
