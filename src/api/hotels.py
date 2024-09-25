@@ -1,6 +1,8 @@
 from fastapi import Query, Body, APIRouter
 
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, func
+
+from repositories.hotels import HotelsRepository
 from src.models.hotels import HotelsOrm
 
 from src.api.dependencies import PaginationParams, PaginationDep
@@ -15,32 +17,35 @@ async def get_hotels(
     title: str | None = Query(default=None, description='Название отеля'),
     location: str | None = Query(default=None, description='Адрес отеля'),
 ):
-    per_page = pagination.per_page or 5
     async with async_session_maker() as session:
-        query = select( HotelsOrm )
-        if title:
-            # query = query.filter_by(title=title)
-            # query = query.where(HotelsOrm.title.like( f"%{ title }%"))
-            query = query.where(HotelsOrm.title.contains(title))
-        if location:
-            query = query.where(HotelsOrm.location.contains(location))
-
-        query = (
-            query
-            .limit( pagination.per_page )
-            .offset( pagination.per_page * (pagination.page - 1) )
-        )
-        # print( query.compile( engine,
-        #         compile_kwargs={
-        #             "literal_binds": True
-        #         }
-        #     )
-        # )
-
-        result = await session.execute(query)
-        hotels = result.scalars().all()
-
-        return hotels
+        return await HotelsRepository(session).get_all()
+    # per_page = pagination.per_page or 5
+    #     query = select( HotelsOrm )
+    #     if title:
+    #         # query = query.filter_by(title=title)
+    #         # query = query.where(HotelsOrm.title.like( f"%{ title }%"))
+    #         # query = query.where(HotelsOrm.title.contains(title))
+    #         query = query.filter(func.lower(HotelsOrm.title).contains(title.strip().lower()))
+    #     if location:
+    #         # query = query.where(HotelsOrm.location.contains(location))
+    #         query = query.filter(func.lower(HotelsOrm.location).contains(location.strip().lower()))
+    #
+    #     query = (
+    #         query
+    #         .limit( pagination.per_page )
+    #         .offset( pagination.per_page * (pagination.page - 1) )
+    #     )
+    #     # print( query.compile( engine,
+    #     #         compile_kwargs={
+    #     #             "literal_binds": True
+    #     #         }
+    #     #     )
+    #     # )
+    #
+    #     result = await session.execute(query)
+    #     hotels = result.scalars().all()
+    #
+    #     return hotels
 
     # return hotels_[pagination.per_page * (pagination.page-1):pagination.per_page*pagination.page]
 
