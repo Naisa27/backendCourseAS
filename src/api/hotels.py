@@ -1,12 +1,9 @@
 from fastapi import Query, Body, APIRouter
 
-from sqlalchemy import insert, select, func
-
 from repositories.hotels import HotelsRepository
-from src.models.hotels import HotelsOrm
 
-from src.api.dependencies import PaginationParams, PaginationDep
-from src.database import async_session_maker, engine
+from src.api.dependencies import PaginationDep
+from src.database import async_session_maker
 from src.schemas.hotels import Hotel, HotelPATCH
 
 router = APIRouter(prefix="/hotels", tags=["Отели"])
@@ -28,15 +25,13 @@ async def get_hotels(
 
 
 @router.put("/{hotel_id}")
-def put_hotel(
+async def put_hotel(
     hotel_id: int,
     hotel_data: Hotel
 ):
-    global hotels
-    for hotel in hotels:
-        if hotel['id'] == hotel_id:
-            hotel['title'] = hotel_data.title
-            hotel['name'] = hotel_data.name
+    async with async_session_maker() as session:
+        await HotelsRepository( session ).edit( hotel_data, id=hotel_id)
+        await session.commit()
 
     return {"status": 'OK'}
 
@@ -60,10 +55,11 @@ def patch_hotel(
 
 
 @router.delete("/{hotel_id}")
-def delete_hotel(hotel_id: int):
-    global hotels
-    hotels = [hotel for hotel in hotels if hotel['id'] != hotel_id]
-    return {"status": 'OK'}
+async def delete_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        await HotelsRepository(session).delete(id=hotel_id)
+        await session.commit()
+        return {"status": 'OK'}
 
 
 @router.post("")
@@ -88,7 +84,6 @@ async def create_hotel(
     )
 ):
     async with async_session_maker() as session:
-        hotel = await HotelsRepository(session).add(**hotel_data.model_dump())
+        hotel = await HotelsRepository(session).add(hotel_data)
         await session.commit()
-
     return {"status": "OK", "data": hotel}
