@@ -24,13 +24,14 @@ async def get_hotels(
         )
 
 
-@router.put("/{hotel_id}")
+@router.put("/{hotel_id}/{hotel_title}")
 async def put_hotel(
     hotel_id: int,
+    hotel_title: str,
     hotel_data: Hotel
 ):
     async with async_session_maker() as session:
-        await HotelsRepository( session ).edit( hotel_data, id=hotel_id)
+        await HotelsRepository( session ).edit( hotel_data, id=hotel_id, title=hotel_title)
         await session.commit()
 
     return {"status": 'OK'}
