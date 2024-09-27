@@ -24,14 +24,23 @@ async def get_hotels(
         )
 
 
-@router.put("/{hotel_id}/{hotel_title}")
-async def put_hotel(
+@router.get(
+    "/{hotel_id}",
+    summary="Получение данных конкретного отеля"
+)
+async def get_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        hotel = await HotelsRepository(session).get_one_or_none(id=hotel_id)
+        return hotel if hotel else {"detail": "Такого отеля нет"}
+
+
+@router.put("/{hotel_id}")
+async def edit_hotel(
     hotel_id: int,
-    hotel_title: str,
     hotel_data: Hotel
 ):
     async with async_session_maker() as session:
-        await HotelsRepository( session ).edit( hotel_data, id=hotel_id, title=hotel_title)
+        await HotelsRepository( session ).edit( hotel_data, id=hotel_id)
         await session.commit()
 
     return {"status": 'OK'}
@@ -42,15 +51,13 @@ async def put_hotel(
     summary="Частичное обновление данных об отеле",
     description="<h1>Можно отправить name или title.</h1>"
 )
-def patch_hotel(
+async def patch_hotel(
     hotel_id: int,
     hotel_data: HotelPATCH,
 ):
-    global hotels
-    for hotel in hotels:
-        if hotel['id'] == hotel_id:
-            hotel['title'] = hotel_data.title if hotel_data.title else hotel['title']
-            hotel['name'] = hotel_data.name if hotel_data.name else hotel['name']
+    async with async_session_maker() as session:
+        await HotelsRepository( session ).edit( hotel_data, exclude_unset=True, id=hotel_id)
+        await session.commit()
 
     return {"status": 'OK'}
 
@@ -88,3 +95,5 @@ async def create_hotel(
         hotel = await HotelsRepository(session).add(hotel_data)
         await session.commit()
     return {"status": "OK", "data": hotel}
+
+

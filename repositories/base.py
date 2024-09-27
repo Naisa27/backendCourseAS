@@ -28,9 +28,13 @@ class BaseRepository:
         return result.scalars().one()
 
 
-    async def edit(self, data: BaseModel, **filter_by):
+    async def edit(self, data: BaseModel, exclude_unset: bool=False, **filter_by):
         if await self.get_one_or_none( **filter_by ) is not None:
-            edit_data_stmt = update( self.model ).filter_by( **filter_by ).values( **data.model_dump() )
+            edit_data_stmt = (
+                update( self.model )
+                .filter_by( **filter_by )
+                .values( **data.model_dump(exclude_unset=exclude_unset) )
+            )
             await self.session.execute( edit_data_stmt )
         elif await self.get_one_or_none( **filter_by ) is None:
             raise HTTPException(status_code=404, detail="Не найден")
