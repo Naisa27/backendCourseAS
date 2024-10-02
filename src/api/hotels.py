@@ -34,6 +34,33 @@ async def get_hotel(hotel_id: int):
         return hotel if hotel else {"detail": "Такого отеля нет"}
 
 
+@router.post("")
+async def create_hotel(
+    hotel_data: HotelAdd = Body(
+        openapi_examples={
+            '1': {
+                "summary": 'Сочи',
+                'value': {
+                    "title": 'Отель 5 звезд у моря',
+                    "location": "Сочи, ул. Моря, 1",
+                }
+            },
+            '2': {
+                "summary": 'Дубай',
+                'value': {
+                    "title": 'Отель у фонтана',
+                    "location": "Дубай, ул. Шейха, 2",
+                }
+            },
+        }
+    )
+):
+    async with async_session_maker() as session:
+        hotel = await HotelsRepository(session).add(hotel_data)
+        await session.commit()
+    return {"status": "OK", "data": hotel}
+
+
 @router.put("/{hotel_id}")
 async def edit_hotel(
     hotel_id: int,
@@ -70,30 +97,5 @@ async def delete_hotel(hotel_id: int):
         return {"status": 'OK'}
 
 
-@router.post("")
-async def create_hotel(
-    hotel_data: HotelAdd = Body(
-        openapi_examples={
-            '1': {
-                "summary": 'Сочи',
-                'value': {
-                    "title": 'Отель 5 звезд у моря',
-                    "location": "Сочи, ул. Моря, 1",
-                }
-            },
-            '2': {
-                "summary": 'Дубай',
-                'value': {
-                    "title": 'Отель у фонтана',
-                    "location": "Дубай, ул. Шейха, 2",
-                }
-            },
-        }
-    )
-):
-    async with async_session_maker() as session:
-        hotel = await HotelsRepository(session).add(hotel_data)
-        await session.commit()
-    return {"status": "OK", "data": hotel}
 
 
