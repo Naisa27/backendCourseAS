@@ -11,7 +11,7 @@ class BaseRepository:
         self.session = session
 
     async def get_all(self, *args, **kwargs):
-        query = select( self.model )
+        query = select( self.model ).filter_by(**kwargs)
         result = await self.session.execute( query )
 
         # from_attributes определяем в Base

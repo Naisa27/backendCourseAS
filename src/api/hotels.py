@@ -1,4 +1,4 @@
-from fastapi import Query, Body, APIRouter
+from fastapi import Query, Body, APIRouter, HTTPException
 
 from src.repositories.hotels import HotelsRepository
 
@@ -8,7 +8,10 @@ from src.schemas.hotels import HotelAdd, HotelPATCH
 
 router = APIRouter(prefix="/hotels", tags=["Отели"])
 
-@router.get("")
+@router.get(
+    "",
+    summary="получение списка всех отелей"
+)
 async def get_hotels(
     pagination: PaginationDep,
     title: str | None = Query(default=None, description='Название отеля'),
@@ -26,15 +29,21 @@ async def get_hotels(
 
 @router.get(
     "/{hotel_id}",
-    summary="Получение данных конкретного отеля"
+    summary="получение данных по конкретному отелю"
 )
 async def get_hotel(hotel_id: int):
     async with async_session_maker() as session:
         hotel = await HotelsRepository(session).get_one_or_none(id=hotel_id)
-        return hotel if hotel else {"detail": "Такого отеля нет"}
+        if hotel:
+            return hotel
+        else:
+            raise HTTPException(status_code=404, detail="Такого отеля не существует")
 
 
-@router.post("")
+@router.post(
+    "",
+    summary="добавление отеля"
+)
 async def create_hotel(
     hotel_data: HotelAdd = Body(
         openapi_examples={
@@ -61,7 +70,10 @@ async def create_hotel(
     return {"status": "OK", "data": hotel}
 
 
-@router.put("/{hotel_id}")
+@router.put(
+    "/{hotel_id}",
+    summary="изменение данных по отелю"
+)
 async def edit_hotel(
     hotel_id: int,
     hotel_data: HotelAdd
@@ -89,7 +101,10 @@ async def patch_hotel(
     return {"status": 'OK'}
 
 
-@router.delete("/{hotel_id}")
+@router.delete(
+    "/{hotel_id}",
+    summary="Удаление отеля"
+)
 async def delete_hotel(hotel_id: int):
     async with async_session_maker() as session:
         await HotelsRepository(session).delete(id=hotel_id)
