@@ -66,4 +66,4 @@ class BaseRepository:
         if await self.get_one_or_none( **filter_by ) is not None:
             await self.session.execute( del_data_stmt )
         else:
-            raise HTTPException(status_code=404, detail="Not found")
+            raise HTTPException(status_code=404, detail="Не найден")

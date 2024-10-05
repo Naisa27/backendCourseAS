@@ -2,7 +2,7 @@ from fastapi import APIRouter, Body, HTTPException
 
 from src.database import async_session_maker
 from src.repositories.rooms import RoomsRepository
-from src.schemas.rooms import RoomAdd
+from src.schemas.rooms import RoomAdd, RoomPATCH
 from src.api.hotels import get_hotel
 
 router = APIRouter(prefix="/hotels", tags=["номера"])
@@ -83,22 +83,39 @@ async def add_room(
     "/{hotel_id}/rooms/{room_id}",
     summary="полное изменение данных по номеру"
 )
-async def edit_room(hotel_id, room_id):
-    ...
+async def edit_room( room_data: RoomAdd, room_id: int, hotel_id: int):
+    async with async_session_maker() as session:
+        hotel = await get_hotel( hotel_id=hotel_id )
+        if hotel:
+            await RoomsRepository(session).edit(room_data, id=room_id, hotel_id=hotel_id)
+            await session.commit()
+
+    return {"status": 'OK'}
 
 
 @router.patch(
     "/{hotel_id}/rooms/{room_id}",
-    summary="Частичное обновление данных о номере",
-    description="<h1>Можно отправить name или title.</h1>"
+    summary="Частичное обновление данных о номере"
 )
-async def patch_room(hotel_id, room_id):
-    ...
+async def patch_room(room_data: RoomPATCH, hotel_id: int, room_id: int):
+    async with async_session_maker() as session:
+        hotel = await get_hotel( hotel_id=hotel_id )
+        if hotel:
+            await RoomsRepository(session).edit(room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
+            await session.commit()
+
+    return {"status": 'OK'}
 
 
 @router.delete(
     "/{hotel_id}/rooms/{room_id}",
     summary="удаление данных о номере"
 )
-async def delete_room(hotel_id, room_id):
-    ...
+async def delete_room(hotel_id:int, room_id: int):
+    async with async_session_maker() as session:
+        hotel = await get_hotel( hotel_id=hotel_id )
+        if hotel:
+            await RoomsRepository(session).delete(id=room_id, hotel_id=hotel_id)
+            await session.commit()
+
+    return {"status": 'OK'}

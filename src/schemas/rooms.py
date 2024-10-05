@@ -19,3 +19,4 @@ class RoomPATCH(BaseModel):
     description: str | None = Field(default=None)
     price: int | None = Field(default=None)
     quantity: int | None = Field(default=None)
+    hotel_id: int | None = Field(default=None)
