@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Body, HTTPException
 
-from src.database import async_session_maker
-from src.repositories.rooms import RoomsRepository
+from src.api.dependencies import DBDep
 from src.schemas.rooms import RoomAdd, RoomPatch, RoomAddRequest, RoomPatchRequest
 from src.api.hotels import get_hotel
 
@@ -11,15 +10,17 @@ router = APIRouter(prefix="/hotels", tags=["номера"])
     "/{hotel_id}/rooms",
     summary="получение данных о всех номерах"
 )
-async def get_rooms(hotel_id: int):
-    async with async_session_maker() as session:
-        hotel = await get_hotel(hotel_id=hotel_id)
-        if hotel:
-            rooms = await RoomsRepository(session).get_filtered(hotel_id=hotel_id)
-            if rooms:
-                return rooms
-            else:
-                raise HTTPException(status_code=422, detail="В данном отеле нет номеров")
+async def get_rooms(
+    hotel_id: int,
+    db: DBDep,
+):
+    hotel = await get_hotel(hotel_id=hotel_id, db=db)
+    if hotel:
+        rooms = await db.rooms.get_filtered(hotel_id=hotel_id)
+        if rooms:
+            return rooms
+        else:
+            raise HTTPException(status_code=422, detail="В данном отеле нет номеров")
 
 
 
@@ -29,18 +30,18 @@ async def get_rooms(hotel_id: int):
 )
 async def get_rooms(
     hotel_id: int,
-    rooms_id: int
+    rooms_id: int,
+    db: DBDep,
 ):
-    async with async_session_maker() as session:
-        hotel = await get_hotel( hotel_id=hotel_id )
-        if hotel:
-            room = await RoomsRepository(session).get_one_or_none(hotel_id=hotel_id, id=rooms_id)
-            if room:
-                return room
-            else:
-                raise HTTPException( status_code=404,
-                    detail="В этом отеле нет такого номера"
-                )
+    hotel = await get_hotel( hotel_id=hotel_id, db=db)
+    if hotel:
+        room = await db.rooms.get_one_or_none(hotel_id=hotel_id, id=rooms_id)
+        if room:
+            return room
+        else:
+            raise HTTPException( status_code=404,
+                detail="В этом отеле нет такого номера"
+            )
 
 
 @router.post(
@@ -49,6 +50,7 @@ async def get_rooms(
 )
 async def add_room(
     hotel_id: int,
+    db: DBDep,
     room_data: RoomAddRequest = Body(
         openapi_examples={
             '1': {
@@ -73,12 +75,11 @@ async def add_room(
     ),
 ):
     _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
-    async with async_session_maker() as session:
-        hotel = await get_hotel( hotel_id=hotel_id )
-        if hotel:
-            room = await RoomsRepository(session).add(_room_data)
-            await session.commit()
-    return {"status": "OK", "data": room}
+    hotel = await get_hotel( hotel_id=hotel_id, db=db)
+    if hotel:
+        room = await db.rooms.add(_room_data)
+        await db.commit()
+        return {"status": "OK", "data": room}
 
 
 @router.put(
@@ -89,13 +90,13 @@ async def edit_room(
     room_data: RoomAddRequest,
     hotel_id: int,
     room_id: int,
+    db: DBDep,
 ):
     _room_data = RoomAdd( hotel_id=hotel_id, **room_data.model_dump())
-    async with async_session_maker() as session:
-        hotel = await get_hotel( hotel_id=hotel_id )
-        if hotel:
-            await RoomsRepository(session).edit(_room_data, id=room_id)
-            await session.commit()
+    hotel = await get_hotel( hotel_id=hotel_id, db=db)
+    if hotel:
+        await db.rooms.edit(_room_data, id=room_id)
+        await db.commit()
 
     return {"status": 'OK'}
 
@@ -107,14 +108,14 @@ async def edit_room(
 async def patch_room(
     room_data: RoomPatchRequest,
     hotel_id: int,
-    room_id: int
+    room_id: int,
+    db: DBDep,
 ):
     _room_data = RoomPatch( hotel_id=hotel_id, **room_data.model_dump(exclude_unset=True))
-    async with async_session_maker() as session:
-        hotel = await get_hotel( hotel_id=hotel_id )
-        if hotel:
-            await RoomsRepository(session).edit(_room_data, exclude_unset=True, id=room_id)
-            await session.commit()
+    hotel = await get_hotel( hotel_id=hotel_id, db=db)
+    if hotel:
+        await db.rooms.edit(_room_data, exclude_unset=True, id=room_id)
+        await db.commit()
 
     return {"status": 'OK'}
 
@@ -123,11 +124,14 @@ async def patch_room(
     "/{hotel_id}/rooms/{room_id}",
     summary="удаление данных о номере"
 )
-async def delete_room(hotel_id:int, room_id: int):
-    async with async_session_maker() as session:
-        hotel = await get_hotel( hotel_id=hotel_id )
-        if hotel:
-            await RoomsRepository(session).delete(id=room_id, hotel_id=hotel_id)
-            await session.commit()
+async def delete_room(
+    hotel_id:int,
+    room_id: int,
+    db: DBDep,
+):
+    hotel = await get_hotel( hotel_id=hotel_id, db=db)
+    if hotel:
+        await db.rooms.delete(id=room_id, hotel_id=hotel_id)
+        await db.commit()
 
     return {"status": 'OK'}
