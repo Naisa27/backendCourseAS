@@ -2,8 +2,6 @@ from pydantic import BaseModel
 from sqlalchemy import select, insert, delete, update
 from fastapi import HTTPException
 
-from src.database import engine
-
 
 class BaseRepository:
     model = None
