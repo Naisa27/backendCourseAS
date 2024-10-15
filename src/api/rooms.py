@@ -3,6 +3,7 @@ from datetime import date
 from fastapi import APIRouter, Body, HTTPException, Query
 
 from src.api.dependencies import DBDep
+from src.schemas.facilities import RoomFacilityAdd
 from src.schemas.rooms import RoomAdd, RoomPatch, RoomAddRequest, RoomPatchRequest
 from src.api.hotels import get_hotel
 
@@ -64,7 +65,8 @@ async def add_room(
                     "title": "двухместный",
                     "description": "вид на море",
                     "price": 100,
-                    "quantity": 5
+                    "quantity": 5,
+                    "facility_ids": []
                 },
             },
             '2': {
@@ -73,7 +75,8 @@ async def add_room(
                     "title": "люкс",
                     "description": "вид на красоту",
                     "price": 500,
-                    "quantity": 3
+                    "quantity": 3,
+                    "facilities_ids": []
                 },
             }
         }
@@ -83,6 +86,9 @@ async def add_room(
     hotel = await get_hotel( hotel_id=hotel_id, db=db)
     if hotel:
         room = await db.rooms.add(_room_data)
+        rooms_facilities_data = [ RoomFacilityAdd(room_id=room.id, facility_id=f_id) for f_id in
+                                  room_data.facility_ids ]
+        await db.rooms_facilities.add_bulk(rooms_facilities_data)
         await db.commit()
         return {"status": "OK", "data": room}
 

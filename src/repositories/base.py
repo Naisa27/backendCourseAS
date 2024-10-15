@@ -54,6 +54,13 @@ class BaseRepository:
         return self.schema.model_validate(model)
 
 
+    async def add_bulk(self, data: list[BaseModel]):
+        add_data_stmt = insert( self.model ).values( [ item.model_dump() for item in data] )
+        # print(add_hotel_stmt.compile(engine, compile_kwargs={"literal_binds": True}))
+        await self.session.execute( add_data_stmt )
+
+
+
     async def edit(self, data: BaseModel, exclude_unset: bool=False, **filter_by):
         if await self.get_one_or_none( **filter_by ) is not None:
             edit_data_stmt = (
