@@ -3,6 +3,7 @@ from datetime import date
 from sqlalchemy import select, func
 
 from src.models.bookings import BookingsOrm
+from src.models.facilities import RoomsFacilitiesOrm
 from src.models.rooms import RoomsOrm
 
 
@@ -61,3 +62,18 @@ def rooms_ids_for_booking(
     )
 
     return rooms_ids_to_get
+
+
+def current_room_facilities_ids(
+    room_id: int,
+):
+    facilities_ids = (
+        select( RoomsFacilitiesOrm.facility_id )
+        .select_from( RoomsFacilitiesOrm )
+        .filter( RoomsFacilitiesOrm.room_id == room_id )
+    )
+    return facilities_ids
+
+
+
+

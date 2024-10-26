@@ -98,15 +98,33 @@ async def add_room(
     summary="полное изменение данных по номеру"
 )
 async def edit_room(
-    room_data: RoomAddRequest,
     hotel_id: int,
     room_id: int,
     db: DBDep,
+    room_data: RoomAddRequest = Body(
+        openapi_examples={
+            '1': {
+                "summary": "12 - двухместный",
+                "value": {
+                    "title": "двухместный",
+                    "description": "вид на красивое море",
+                    "price": 100,
+                    "quantity": 5,
+                    "facility_ids": [2, 3]
+                },
+            },
+
+        }
+    )
 ):
     _room_data = RoomAdd( hotel_id=hotel_id, **room_data.model_dump())
     hotel = await get_hotel( hotel_id=hotel_id, db=db)
     if hotel:
+        rooms_facilities_data = [RoomFacilityAdd( room_id=room_id, facility_id=f_id ) for f_id in room_data.facility_ids]
+        await db.rooms_facilities.add_bulk( room_id=room_id, facilities_data=rooms_facilities_data )
+        await db.rooms_facilities.delete( room_id=room_id, facilities_data=rooms_facilities_data )
         await db.rooms.edit(_room_data, id=room_id)
+
         await db.commit()
 
     return {"status": 'OK'}
@@ -117,14 +135,33 @@ async def edit_room(
     summary="Частичное обновление данных о номере"
 )
 async def patch_room(
-    room_data: RoomPatchRequest,
     hotel_id: int,
     room_id: int,
     db: DBDep,
+    room_data: RoomPatchRequest = Body(
+        openapi_examples={
+            '1': {
+                "summary": "12/12 - двухместный",
+                "value": {
+                    "title": "двухместный",
+                    "description": "вид на красивое море",
+                    "price": 100,
+                    "quantity": 5,
+                    "facility_ids": [1, 4]
+                },
+            },
+
+        },
+    )
 ):
     _room_data = RoomPatch( hotel_id=hotel_id, **room_data.model_dump(exclude_unset=True))
     hotel = await get_hotel( hotel_id=hotel_id, db=db)
     if hotel:
+        if room_data.facility_ids:
+            rooms_facilities_data = [RoomFacilityAdd(room_id=room_id, facility_id=f_id) for f_id in room_data.facility_ids]
+            await db.rooms_facilities.add_bulk( room_id=room_id, facilities_data=rooms_facilities_data)
+            await db.rooms_facilities.delete( room_id=room_id, facilities_data=rooms_facilities_data)
+
         await db.rooms.edit(_room_data, exclude_unset=True, id=room_id)
         await db.commit()
 
