@@ -41,7 +41,7 @@ async def get_rooms(
 ):
     hotel = await get_hotel( hotel_id=hotel_id, db=db)
     if hotel:
-        room = await db.rooms.get_room_by_id(hotel_id=hotel_id, room_id=rooms_id)
+        room = await db.rooms.get_one_or_none_with_rels(hotel_id=hotel_id, id=rooms_id)
         if room:
             return room
         else:

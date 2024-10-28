@@ -31,15 +31,14 @@ class RoomsRepository(BaseRepository):
         return [RoomWithRels.model_validate( model ) for model in result.scalars().all()] # .unique() нужен при joinedload
 
 
-    async def get_room_by_id(
+    async def get_one_or_none_with_rels(
         self,
-        hotel_id: int,
-        room_id: int
+        **filter_by
     ):
         query = (
             select( self.model )
             .options( joinedload( self.model.facilities ) )
-            .filter_by( hotel_id = hotel_id, id = room_id)
+            .filter_by( **filter_by)
         )
 
         result = await self.session.execute( query )
