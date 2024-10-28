@@ -3,10 +3,12 @@ from sqlalchemy import select, insert, delete, update
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
 
+from src.repositories.mappers.base import DataMapper
+
 
 class BaseRepository:
     model = None
-    schema: BaseModel = None
+    mapper: DataMapper = None
 
     def __init__(self, session):
         self.session = session
@@ -22,7 +24,7 @@ class BaseRepository:
         # return [ self.schema.model_validate(model, from_attributes=True) for model in result.scalars().all()]
 
         # from_attributes определяем в схемах централизовано
-        return [ self.schema.model_validate(model) for model in result.scalars().all()]
+        return [ self.mapper.map_to_domain_entity(model) for model in result.scalars().all()]
 
 
     async def get_all(self, *args, **kwargs):
@@ -43,7 +45,7 @@ class BaseRepository:
         # return self.schema.model_validate(model, from_attributes=True)
 
         # from_attributes определяем в схемах централизовано
-        return self.schema.model_validate(model)
+        return self.mapper.map_to_domain_entity(model)
 
 
     async def add(self, data: BaseModel):
@@ -56,7 +58,7 @@ class BaseRepository:
         # return self.schema.model_validate(model, from_attributes=True)
 
         # from_attributes определяем в схемах централизовано
-        return self.schema.model_validate(model)
+        return self.mapper.map_to_domain_entity(model)
 
 
     async def add_bulk(self, data: list[BaseModel]):
