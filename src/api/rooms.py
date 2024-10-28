@@ -120,10 +120,8 @@ async def edit_room(
     _room_data = RoomAdd( hotel_id=hotel_id, **room_data.model_dump())
     hotel = await get_hotel( hotel_id=hotel_id, db=db)
     if hotel:
-        rooms_facilities_data = [RoomFacilityAdd( room_id=room_id, facility_id=f_id ) for f_id in room_data.facility_ids]
-        await db.rooms_facilities.add_bulk( room_id=room_id, facilities_data=rooms_facilities_data )
-        await db.rooms_facilities.delete( room_id=room_id, facilities_data=rooms_facilities_data )
         await db.rooms.edit(_room_data, id=room_id)
+        await db.rooms_facilities.set_room_facilities(room_id, facilities_ids=room_data.facility_ids)
 
         await db.commit()
 
@@ -154,15 +152,13 @@ async def patch_room(
         },
     )
 ):
-    _room_data = RoomPatch( hotel_id=hotel_id, **room_data.model_dump(exclude_unset=True))
+    _room_data_dict = room_data.model_dump( exclude_unset=True )
+    _room_data = RoomPatch( hotel_id=hotel_id, **_room_data_dict)
     hotel = await get_hotel( hotel_id=hotel_id, db=db)
     if hotel:
-        if room_data.facility_ids:
-            rooms_facilities_data = [RoomFacilityAdd(room_id=room_id, facility_id=f_id) for f_id in room_data.facility_ids]
-            await db.rooms_facilities.add_bulk( room_id=room_id, facilities_data=rooms_facilities_data)
-            await db.rooms_facilities.delete( room_id=room_id, facilities_data=rooms_facilities_data)
-
         await db.rooms.edit(_room_data, exclude_unset=True, id=room_id)
+        if "facility_ids" in _room_data_dict:
+            await db.rooms_facilities.set_room_facilities( room_id, facilities_ids=_room_data_dict["facility_ids"])
         await db.commit()
 
     return {"status": 'OK'}
