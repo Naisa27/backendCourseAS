@@ -9,11 +9,7 @@ from alembic import context
 # access to the values within the .ini file in use.
 from src.config import settings
 from src.database import Base
-from src.models.hotels import HotelsOrm
-from src.models.rooms import RoomsOrm
-from src.models.users import UsersOrm
-from src.models.bookings import BookingsOrm
-from src.models.facilities import FacilitiesOrm, RoomsFacilitiesOrm
+from src.models import *
 
 config = context.config
 
