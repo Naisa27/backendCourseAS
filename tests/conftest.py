@@ -35,11 +35,11 @@ async def setup_database(check_test_mode) -> None:
 async def add_test_data_in_db(setup_database):
     with open('tests/mock_hotels.json', 'r', encoding='utf-8') as file:
         hotels_data = json.load(file)
-        print(f'{hotels_data=}')
+        # print(f'{hotels_data=}')
 
     with open('tests/mock_rooms.json', 'r', encoding='utf-8') as file:
         rooms_data = json.load(file)
-        print(f'{rooms_data=}')
+        # print(f'{rooms_data=}')
 
     async with DBManager( session_factory=async_session_maker_null_pool ) as db_:
         await db_.hotels.add_bulk([HotelAdd(**hotel) for hotel in hotels_data])
