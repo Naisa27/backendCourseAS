@@ -18,6 +18,12 @@ def check_test_mode() -> None:
     assert settings.MODE == "TEST"
 
 
+@pytest.fixture(scope="function")
+async def db() -> DBManager:
+    async with DBManager( session_factory=async_session_maker_null_pool ) as db:
+        yield db
+
+
 @pytest.fixture(scope="session", autouse=True)
 async def setup_database(check_test_mode) -> None:
     async with engine_null_pool.begin() as conn:
@@ -35,19 +41,27 @@ async def add_test_data_in_db(setup_database):
         rooms_data = json.load(file)
         print(f'{rooms_data=}')
 
-    async with DBManager(session_factory=async_session_maker_null_pool) as db:
-        await db.hotels.add_bulk([HotelAdd(**hotel) for hotel in hotels_data])
-        await db.rooms.add_bulk([RoomAdd(**room) for room in rooms_data])
-        await db.commit()
+    async with DBManager( session_factory=async_session_maker_null_pool ) as db_:
+        await db_.hotels.add_bulk([HotelAdd(**hotel) for hotel in hotels_data])
+        await db_.rooms.add_bulk([RoomAdd(**room) for room in rooms_data])
+        await db_.commit()
+
+
+@pytest.fixture(scope="session")
+async def ac() -> AsyncClient:
+    async with AsyncClient( transport=ASGITransport( app=app ), base_url="http://test" ) as ac:
+        yield ac
 
 
 @pytest.fixture(scope="session", autouse=True)
-async def register_user(setup_database):
-    async with AsyncClient( transport = ASGITransport(app=app), base_url="http://test" ) as ac:
-            await ac.post(
-                "/auth/register",
-                json={
-                    "email": "kot@pes.com",
-                    "password": "1234",
-                }
-            )
+async def register_user(setup_database, ac):
+        await ac.post(
+            "/auth/register",
+            json={
+                "email": "kot@pes.com",
+                "password": "1234",
+            }
+        )
+
+
+
