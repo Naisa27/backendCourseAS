@@ -19,7 +19,7 @@ async def get_facilities(db: DBDep):
 
 
 @router.post(
-    "/",
+    "",
     summary="Добавление удобства"
 )
 async def add_facility(
@@ -29,6 +29,6 @@ async def add_facility(
     facility = await db.facilities.add(facility_data)
     await db.commit()
 
-    # test_task.delay(5)
+    test_task.delay(5)
 
     return {"status": "ok", "data": facility}

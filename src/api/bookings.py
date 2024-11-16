@@ -14,7 +14,7 @@ async def get_bookings(db: DBDep):
 
 
 @router.get(
-    "/me/",
+    "/me",
     summary="получение бронирований текущего пользователя"
 )
 async def get_my_bookings(
@@ -25,7 +25,7 @@ async def get_my_bookings(
 
 
 @router.post(
-    "/{room_id}/",
+    "/{room_id}",
     summary="добавление бронирования"
 )
 async def add_booking(
