@@ -1,5 +1,8 @@
 import pytest
 import json
+from  unittest import mock
+
+mock.patch("fastapi_cache.decorator.cache", lambda *args, **kwargs: lambda x: x).start()
 
 from src.api.dependencies import get_db
 from src.config import settings
@@ -7,7 +10,7 @@ from src.database import Base, engine_null_pool, async_session_maker_null_pool
 from src.main import app
 from src.models import *
 
-from httpx import ASGITransport, AsyncClient
+from httpx import ASGITransport, AsyncClient, Cookies
 
 from src.schemas.hotels import HotelAdd
 from src.schemas.rooms import RoomAdd
@@ -70,6 +73,22 @@ async def register_user(setup_database, ac):
                 "password": "1234",
             }
         )
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def authenticated_ac(register_user, ac):
+        response = await ac.post(
+            "/auth/login",
+            json={
+                "email": "kot@pes.com",
+                "password": "1234",
+            }
+        )
+        assert response
+        assert response.json()["access_token"]
+        access_token = response.json()["access_token"]
+        print(f'access_token = {access_token}')
+        yield ac
 
 
 
