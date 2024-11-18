@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body
 
 from src.api.dependencies import DBDep, UserIdDep
-from src.schemas.bookings import BookingAddPeriod, BookingAdd
+from src.schemas.bookings import BookingAddPeriod, BookingAdd, BookingAddRequest
 
 router = APIRouter(prefix="/bookings", tags=["бронирования"])
 
@@ -25,18 +25,18 @@ async def get_my_bookings(
 
 
 @router.post(
-    "/{room_id}",
+    "",
     summary="добавление бронирования"
 )
 async def add_booking(
-    room_id: int,
     user_id: UserIdDep,
     db: DBDep,
-    booking_data: BookingAddPeriod = Body(
+    booking_data: BookingAddRequest = Body(
         openapi_examples={
             '1': {
                 "summary": "двухместный",
                 "value": {
+                    "room_id": 1,
                     "date_from": "2024-11-01",
                     "date_to": "2024-11-10"
                 },
@@ -44,6 +44,7 @@ async def add_booking(
             '2': {
                 "summary": "люкс",
                 "value": {
+                    "room_id": 12,
                     "date_from": "2024-12-05",
                     "date_to": "2024-12-12"
                 },
@@ -51,10 +52,9 @@ async def add_booking(
         }
     ),
 ):
-    room = await db.rooms.get_one_or_none(id=room_id)
+    room = await db.rooms.get_one_or_none(id=booking_data.room_id)
     room_price: int = room.price
     _booking_data = BookingAdd(
-        room_id=room_id,
         user_id=user_id,
         price = room_price,
         **booking_data.model_dump()

@@ -16,7 +16,6 @@ import sys
 from pathlib import Path
 
 # если не видит файлы в папке src
-from src.config import settings
 
 sys.path.append(str(Path(__file__).parent.parent))
 
