@@ -1,11 +1,14 @@
 from datetime import date
 
+from fastapi import HTTPException
 from sqlalchemy import select
 
+from src.models import RoomsOrm
 from src.models.bookings import BookingsOrm
 from src.repositories.base import BaseRepository
 from src.repositories.mappers.mappers import BookingDataMapper
-from src.schemas.bookings import Booking
+from src.repositories.utils import rooms_ids_for_booking
+from src.schemas.bookings import Booking, BookingAdd
 
 
 class BookingsRepository(BaseRepository):
@@ -22,3 +25,16 @@ class BookingsRepository(BaseRepository):
         )
         res = await self.session.execute(query)
         return [self.mapper.map_to_domain_entity(booking) for booking in res.scalars().all()]
+
+
+    async def add_booking(self, booking_data: BookingAdd):
+        rooms_ids_to_get = rooms_ids_for_booking(
+            booking_data.date_from,
+            booking_data.date_to,
+        )
+        rooms_ids = ( await self.session.execute( rooms_ids_to_get ) ).scalars().all()
+        if booking_data.room_id in rooms_ids:
+            await super().add(booking_data)
+        else:
+            raise HTTPException( status_code=422, detail="Нет номеров для бронирования")
+
