@@ -27,14 +27,16 @@ class BookingsRepository(BaseRepository):
         return [self.mapper.map_to_domain_entity(booking) for booking in res.scalars().all()]
 
 
-    async def add_booking(self, booking_data: BookingAdd):
+    async def add_booking(self, booking_data: BookingAdd, hotel_id: int):
         rooms_ids_to_get = rooms_ids_for_booking(
-            booking_data.date_from,
-            booking_data.date_to,
+            date_from = booking_data.date_from,
+            date_to = booking_data.date_to,
+            hotel_id = hotel_id,
         )
         rooms_ids = ( await self.session.execute( rooms_ids_to_get ) ).scalars().all()
         if booking_data.room_id in rooms_ids:
-            await super().add(booking_data)
+            new_booking = await self.add(booking_data)
+            return new_booking
         else:
             raise HTTPException( status_code=422, detail="Нет номеров для бронирования")
 
