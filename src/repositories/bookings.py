@@ -1,7 +1,7 @@
 from datetime import date
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from src.models import RoomsOrm
 from src.models.bookings import BookingsOrm
@@ -38,5 +38,9 @@ class BookingsRepository(BaseRepository):
             new_booking = await self.add(booking_data)
             return new_booking
         else:
-            raise HTTPException( status_code=422, detail="Нет номеров для бронирования")
+            raise HTTPException( status_code=500, detail="Нет номеров для бронирования")
 
+
+    async  def delete_all_bookings(self):
+        del_data_stmt = delete( self.model )
+        await self.session.execute( del_data_stmt )
