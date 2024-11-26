@@ -20,7 +20,7 @@ async def register_user(
         await db.users.add(new_user_data)
     except IntegrityError:
         # return {"status": "500", "message": "Пользователь с таким email уже существует"}
-        raise HTTPException( status_code=422, detail="Пользователь с таким email не зарегистрирован")
+        raise HTTPException( status_code=452, detail="Пользователь с таким email уже существует")
     await db.commit()
     return {"status": "ok"}
 

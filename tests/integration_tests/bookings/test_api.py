@@ -38,6 +38,7 @@ async def test_add_booking(
 async def delete_all_bookings():
     async with DBManager( session_factory=async_session_maker_null_pool ) as db_:
         await db_.bookings.delete_all_bookings()
+        # await db_.bookings.delete()
         await db_.commit()
 
 
@@ -60,15 +61,18 @@ async def test_add_and_get_bookings(
     )
     # print( f"{response.json()=}" )
     res = response.json()
+    assert  response.status_code == 200
     assert isinstance( res, dict)
     assert res["status"] == "OK"
     assert "data" in res
 
-    responseMe = await authenticated_ac.get(
+    response_my_bookings = await authenticated_ac.get(
         "/bookings/me",
     )
 
-    amountMe = len(responseMe.json())
+    assert response_my_bookings.status_code == 200
+
+    amountMe = len(response_my_bookings.json())
     # print( f"{responseMe.json()=}" )
     # print(f"len(responseMe.json()) = {len(responseMe.json())}")
     assert amountMe == amount
