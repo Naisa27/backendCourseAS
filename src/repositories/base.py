@@ -1,7 +1,9 @@
 from pydantic import BaseModel
 from sqlalchemy import select, insert, delete, update
+from sqlalchemy.exc import NoResultFound, IntegrityError
 from fastapi import HTTPException
 
+from src.exceptions import ObjectNotFoundException, ItExistsException, ObjectMoreOneException
 from src.repositories.mappers.base import DataMapper
 
 
@@ -37,11 +39,26 @@ class BaseRepository:
         # from_attributes определяем в схемах централизовано
         return self.mapper.map_to_domain_entity(model)
 
+
+    async def get_one(self, **filter_by) -> BaseModel:
+        query = select(self.model).filter_by(**filter_by)
+        result = await self.session.execute(query)
+        try:
+            model = result.scalars().one()
+        except NoResultFound:
+            raise ObjectNotFoundException
+
+        return self.mapper.map_to_domain_entity(model)
+
+
     async def add(self, data: BaseModel):
         add_data_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         # print(add_hotel_stmt.compile(engine, compile_kwargs={"literal_binds": True}))
-        result = await self.session.execute(add_data_stmt)
-        model = result.scalars().one()
+        try:
+            result = await self.session.execute(add_data_stmt)
+            model = result.scalars().one()
+        except IntegrityError:
+            raise ItExistsException
 
         # from_attributes определяем в Base
         # return self.schema.model_validate(model, from_attributes=True)
@@ -63,13 +80,14 @@ class BaseRepository:
             )
             await self.session.execute(edit_data_stmt)
         elif await self.get_one_or_none(**filter_by) is None:
-            raise HTTPException(status_code=404, detail="Не найден")
+            raise ObjectNotFoundException
         else:
-            raise HTTPException(status_code=400, detail="Более одного")
+            raise ObjectMoreOneException
+
 
     async def delete(self, **filter_by):
         del_data_stmt = delete(self.model).filter_by(**filter_by).returning(self.model)
         if await self.get_one_or_none(**filter_by) is not None:
             await self.session.execute(del_data_stmt)
         else:
-            raise HTTPException(status_code=404, detail="Не найден")
+            raise ObjectNotFoundException

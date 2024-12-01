@@ -1,7 +1,9 @@
 from datetime import date
 
 from sqlalchemy import select, func
+from sqlalchemy.exc import NoResultFound
 
+from src.exceptions import WrongDateOrderException, ObjectNotFoundException
 from src.models.rooms import RoomsOrm
 from src.repositories.base import BaseRepository
 from src.models.hotels import HotelsOrm
@@ -23,6 +25,10 @@ class HotelsRepository(BaseRepository):
         limit: int,
         offset: int,
     ) -> list[Hotel]:
+
+        if date_from >= date_to:
+            raise WrongDateOrderException
+
         rooms_ids_to_get = rooms_ids_for_booking(date_from=date_from, date_to=date_to)
 
         hotels_ids_to_get = (
@@ -41,3 +47,11 @@ class HotelsRepository(BaseRepository):
 
         result = await self.session.execute(query)
         return [self.mapper.map_to_domain_entity(hotel) for hotel in result.scalars().all()]
+
+
+    async def get_exist_hotel( self, hotel_id: int ):
+        try:
+            hotel = await self.get_one( id=hotel_id )
+            return hotel
+        except NoResultFound:
+            raise ObjectNotFoundException
