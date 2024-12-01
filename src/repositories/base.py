@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from sqlalchemy import select, insert, delete, update
 from fastapi import HTTPException
-from sqlalchemy.orm import joinedload
 
 from src.repositories.mappers.base import DataMapper
 

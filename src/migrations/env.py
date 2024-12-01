@@ -9,7 +9,7 @@ from alembic import context
 # access to the values within the .ini file in use.
 from src.config import settings
 from src.database import Base
-from src.models import *
+from src.models import * # noqa
 
 config = context.config
 

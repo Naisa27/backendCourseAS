@@ -34,7 +34,7 @@ async def get_rooms(
     "/{hotel_id}/rooms/{rooms_id}",
     summary="получение данных о конкретном номере"
 )
-async def get_rooms(
+async def get_room(
     hotel_id: int,
     rooms_id: int,
     db: DBDep,

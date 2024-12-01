@@ -3,7 +3,7 @@ from sqlalchemy import insert, select, delete
 from src.models.facilities import FacilitiesOrm, RoomsFacilitiesOrm
 from src.repositories.base import BaseRepository
 from src.repositories.mappers.mappers import FacilityDataMapper
-from src.schemas.facilities import Facility, RoomFacility, RoomFacilityAdd
+from src.schemas.facilities import RoomFacility
 
 
 class FacilitiesRepository(BaseRepository):

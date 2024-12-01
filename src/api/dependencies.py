@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends, Query, HTTPException, Request
 from pydantic import BaseModel
 
-from src.database import async_session_maker, async_session_maker_null_pool
+from src.database import async_session_maker
 from src.services.auth import AuthService
 from src.utils.db_manager import DBManager
 

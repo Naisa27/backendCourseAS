@@ -3,12 +3,11 @@ from datetime import date
 from fastapi import HTTPException
 from sqlalchemy import select, delete
 
-from src.models import RoomsOrm
 from src.models.bookings import BookingsOrm
 from src.repositories.base import BaseRepository
 from src.repositories.mappers.mappers import BookingDataMapper
 from src.repositories.utils import rooms_ids_for_booking
-from src.schemas.bookings import Booking, BookingAdd
+from src.schemas.bookings import BookingAdd
 
 
 class BookingsRepository(BaseRepository):
