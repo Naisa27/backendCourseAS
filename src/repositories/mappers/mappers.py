@@ -39,4 +39,3 @@ class BookingDataMapper(DataMapper):
 class FacilityDataMapper(DataMapper):
     db_model = FacilitiesOrm
     schema = Facility
-

@@ -6,6 +6,7 @@ import threading
 
 app = FastAPI(docs_url=None, redoc_url=None)
 
+
 @app.get("/sync/{id}")
 def sync_func(id: int):
     print(f"sync. Потоков: {threading.active_count()}")

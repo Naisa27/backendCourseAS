@@ -22,29 +22,24 @@ class RoomsRepository(BaseRepository):
         rooms_ids_to_get = rooms_ids_for_booking(date_from, date_to, hotel_id)
 
         query = (
-            select( self.model )
-            #.options(joinedload(self.model.facilities))  #один запрос в БД и много данных по сети
-            .options(selectinload(self.model.facilities)) #два запроса в БД и меньше данных по сети
-            .filter( RoomsOrm.id.in_(rooms_ids_to_get) )
+            select(self.model)
+            # .options(joinedload(self.model.facilities))  #один запрос в БД и много данных по сети
+            .options(
+                selectinload(self.model.facilities)
+            )  # два запроса в БД и меньше данных по сети
+            .filter(RoomsOrm.id.in_(rooms_ids_to_get))
         )
-        result = await self.session.execute( query )
-        return [RoomDataWithRelsMapper.map_to_domain_entity( model ) for model in result.scalars().all()] # .unique() нужен при joinedload
+        result = await self.session.execute(query)
+        return [
+            RoomDataWithRelsMapper.map_to_domain_entity(model) for model in result.scalars().all()
+        ]  # .unique() нужен при joinedload
 
+    async def get_one_or_none_with_rels(self, **filter_by):
+        query = select(self.model).options(joinedload(self.model.facilities)).filter_by(**filter_by)
 
-    async def get_one_or_none_with_rels(
-        self,
-        **filter_by
-    ):
-        query = (
-            select( self.model )
-            .options( joinedload( self.model.facilities ) )
-            .filter_by( **filter_by)
-        )
-
-        result = await self.session.execute( query )
+        result = await self.session.execute(query)
         model = result.unique().scalars().one_or_none()
         if model is None:
             return None
 
-        return RoomDataWithRelsMapper.map_to_domain_entity( model )
-
+        return RoomDataWithRelsMapper.map_to_domain_entity(model)

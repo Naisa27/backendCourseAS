@@ -22,11 +22,11 @@ class BookingAdd(BaseModel):
     date_to: date
 
     # приводит ответы алхимии к схемам pydentic
-    model_config = ConfigDict( from_attributes=True )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Booking(BookingAdd):
     id: int
 
     # приводит ответы алхимии к схемам pydentic
-    model_config = ConfigDict( from_attributes=True )
+    model_config = ConfigDict(from_attributes=True)

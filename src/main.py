@@ -6,7 +6,7 @@ import uvicorn
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 
-#альтернативный путь к документации, если основной сильно тормозит или вообще не грузит
+# альтернативный путь к документации, если основной сильно тормозит или вообще не грузит
 from fastapi.openapi.docs import (
     get_swagger_ui_html,
     get_swagger_ui_oauth2_redirect_html,
@@ -33,7 +33,7 @@ from src.api.images import router as router_images
 async def lifespan(app: FastAPI):
     # При старте приложения
     await redis_manager.connect()
-    FastAPICache.init( RedisBackend( redis_manager.redis ), prefix="fastapi-cache")
+    FastAPICache.init(RedisBackend(redis_manager.redis), prefix="fastapi-cache")
     yield
     # При выключении/перезагрузке приложения
     await redis_manager.close()
@@ -60,12 +60,12 @@ async def custom_swagger_ui_html():
         swagger_css_url="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css",
     )
 
-#альтернативный путь к документации, если основной сильно тормозит или вообще не грузит
+
+# альтернативный путь к документации, если основной сильно тормозит или вообще не грузит
 @app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
 async def swagger_ui_redirect():
     return get_swagger_ui_oauth2_redirect_html()
 
 
-
-if __name__== "__main__":
+if __name__ == "__main__":
     uvicorn.run("main:app", reload=True)

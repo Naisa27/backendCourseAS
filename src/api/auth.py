@@ -20,7 +20,7 @@ async def register_user(
         await db.users.add(new_user_data)
     except IntegrityError:
         # return {"status": "500", "message": "Пользователь с таким email уже существует"}
-        raise HTTPException( status_code=400, detail="Пользователь с таким email уже существует")
+        raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
     await db.commit()
     return {"status": "ok"}
 
@@ -37,7 +37,7 @@ async def login_user(
     if not user:
         raise HTTPException(status_code=401, detail="Пользователь с таким email не зарегистрирован")
 
-    access_token = AuthService().create_access_token( {"user_id": user.id})
+    access_token = AuthService().create_access_token({"user_id": user.id})
 
     if not AuthService().verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Неверный пароль")

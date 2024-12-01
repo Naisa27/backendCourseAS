@@ -4,15 +4,15 @@ from pydantic import BaseModel
 
 from src.database import Base
 
-DBModelType = TypeVar('DBModelType', bound=Base)
-SchemaType = TypeVar('SchemaType', bound=BaseModel)
+DBModelType = TypeVar("DBModelType", bound=Base)
+SchemaType = TypeVar("SchemaType", bound=BaseModel)
 
 
 class DataMapper:
     db_model: type[DBModelType] = None
-    schema: type[SchemaType]= None
+    schema: type[SchemaType] = None
 
-    #превращает sqlAlchemy-модель в pydentic-схему
+    # превращает sqlAlchemy-модель в pydentic-схему
     @classmethod
     def map_to_domain_entity(cls, data):
         return cls.schema.model_validate(data, from_attributes=True)

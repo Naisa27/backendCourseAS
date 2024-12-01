@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
 
+
 # для использования при получении запроса с клиента
 class UserRequestAdd(BaseModel):
     email: EmailStr
@@ -11,7 +12,7 @@ class UserAdd(BaseModel):
     email: EmailStr
     hashed_password: str
 
-    model_config = ConfigDict( from_attributes=True )
+    model_config = ConfigDict(from_attributes=True)
 
 
 # для возврата данных на клиент
