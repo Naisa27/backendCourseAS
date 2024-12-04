@@ -1,24 +1,22 @@
 from contextlib import asynccontextmanager
+import logging
+import sys
+from pathlib import Path
 
 from fastapi import FastAPI
-import uvicorn
-
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
-
 # альтернативный путь к документации, если основной сильно тормозит или вообще не грузит
 from fastapi.openapi.docs import (
     get_swagger_ui_html,
     get_swagger_ui_oauth2_redirect_html,
 )
-
-import sys
-from pathlib import Path
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+import uvicorn
 
 # если не видит файлы в папке src
-
 sys.path.append(str(Path(__file__).parent.parent))
 
+logging.basicConfig(level=logging.DEBUG)
 
 from src.init import redis_manager
 from src.api.auth import router as router_auth
@@ -34,6 +32,7 @@ async def lifespan(app: FastAPI):
     # При старте приложения
     await redis_manager.connect()
     FastAPICache.init(RedisBackend(redis_manager.redis), prefix="fastapi-cache")
+    logging.info("FastAPI cache initialized")
     yield
     # При выключении/перезагрузке приложения
     await redis_manager.close()

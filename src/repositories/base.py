@@ -1,7 +1,8 @@
+import logging
 from pydantic import BaseModel
 from sqlalchemy import select, insert, delete, update
 from sqlalchemy.exc import NoResultFound, IntegrityError
-from fastapi import HTTPException
+from asyncpg.exceptions import UniqueViolationError
 
 from src.exceptions import ObjectNotFoundException, ItExistsException, ObjectMoreOneException
 from src.repositories.mappers.base import DataMapper
@@ -57,8 +58,14 @@ class BaseRepository:
         try:
             result = await self.session.execute(add_data_stmt)
             model = result.scalars().one()
-        except IntegrityError:
-            raise ItExistsException
+        except IntegrityError as ex:
+            logging.exception(f"Не удалось добавить данные в БД. Входные данные: {data}.")
+            if isinstance(ex.orig.__cause__, UniqueViolationError):
+                raise ItExistsException from ex
+            else:
+                logging.error(f"Незнакомая ошибка. Не удалось добавить данные в БД. Входные данные: {data}. Тип ошибки:"
+                          f" {type(ex.orig.__cause__)=}")
+                raise ex
 
         # from_attributes определяем в Base
         # return self.schema.model_validate(model, from_attributes=True)
@@ -83,6 +90,7 @@ class BaseRepository:
             raise ObjectNotFoundException
         else:
             raise ObjectMoreOneException
+
 
 
     async def delete(self, **filter_by):
