@@ -5,7 +5,7 @@ import pytest
     "email, password, reg_status, pwd_login, login_status, me_status",
     [
         ("user_one@gmail.com", "987", 200, "987", 200, 200),
-        ("kot@pes.com", "1234", 400, "1234", 200, 200),
+        ("kot@pes.com", "1234", 409, "1234", 200, 200),
         ("user_two@ya.ru.com", "1234", 200, "569", 401, 401),
         ("user_three@mail.ru", "1234", 200, "1234", 200, 200),
     ],

@@ -1,11 +1,12 @@
 from datetime import date
 
-from fastapi import Query, Body, APIRouter, HTTPException
+from fastapi import Query, Body, APIRouter
 from fastapi_cache.decorator import cache
 
 from src.api.dependencies import PaginationDep, DBDep
-from src.exceptions import WrongDateOrderException, ObjectNotFoundException, check_date_to_after_date_from, HotelNotFoundHTTPException
+from src.exceptions import ObjectNotFoundException, HotelNotFoundHTTPException
 from src.schemas.hotels import HotelAdd, HotelPATCH
+from src.services.hotels import HotelServise
 
 router = APIRouter(prefix="/hotels", tags=["Отели"])
 
@@ -20,19 +21,16 @@ async def get_hotels(
     date_from: date = Query(examples=["2024-11-02"]),
     date_to: date = Query(examples=["2024-11-07"]),
 ):
-    per_page = pagination.per_page or 5
-    check_date_to_after_date_from( date_from=date_from, date_to=date_to)
-
-    hotels = await db.hotels.get_filtered_by_time(
+    hotels = await HotelServise(db).get_filtered_by_time(
+        pagination=pagination,
+        title=title,
+        location=location,
         date_from=date_from,
         date_to=date_to,
-        location=location,
-        title=title,
-        limit=per_page,
-        offset=per_page * (pagination.page - 1),
     )
 
-    return hotels
+    return {"status": "OK", "data": hotels}
+
 
 
 @router.get("/{hotel_id}", summary="получение данных по конкретному отелю")
@@ -41,7 +39,7 @@ async def get_hotel(
     db: DBDep,
 ):
     try:
-        hotel = await db.hotels.get_exist_hotel(hotel_id=hotel_id)
+        hotel = await HotelServise(db).get_hotel(hotel_id=hotel_id)
         return hotel
     except ObjectNotFoundException:
         raise HotelNotFoundHTTPException
@@ -69,8 +67,7 @@ async def create_hotel(
         }
     ),
 ):
-    hotel = await db.hotels.add(hotel_data)
-    await db.commit()
+    hotel = await HotelServise(db).add_hotel(hotel_data)
     return {"status": "OK", "data": hotel}
 
 
@@ -81,12 +78,9 @@ async def edit_hotel(
     db: DBDep,
 ):
     try:
-        hotel = await db.hotels.get_exist_hotel( hotel_id=hotel_id )
+        await HotelServise(db).edit_hotel(hotel_data, hotel_id = hotel_id)
     except ObjectNotFoundException:
         raise HotelNotFoundHTTPException
-
-    await db.hotels.edit(hotel_data, id=hotel_id)
-    await db.commit()
 
     return {"status": "OK"}
 
@@ -102,13 +96,9 @@ async def patch_hotel(
     db: DBDep,
 ):
     try:
-        hotel = await db.hotels.get_exist_hotel( hotel_id=hotel_id )
+        await HotelServise(db).patch_hotel(hotel_data, hotel_id, exclude_unset=True)
     except ObjectNotFoundException:
         raise HotelNotFoundHTTPException
-
-    await db.hotels.edit(hotel_data, exclude_unset=True, id=hotel_id)
-    await db.commit()
-
     return {"status": "OK"}
 
 
@@ -118,10 +108,8 @@ async def delete_hotel(
     db: DBDep,
 ):
     try:
-        hotel = await db.hotels.get_exist_hotel( hotel_id=hotel_id )
+        await HotelServise(db).delete_hotel(hotel_id)
     except ObjectNotFoundException:
         raise HotelNotFoundHTTPException
 
-    await db.hotels.delete(id=hotel_id)
-    await db.commit()
     return {"status": "OK"}
