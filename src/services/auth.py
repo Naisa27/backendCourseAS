@@ -41,22 +41,18 @@ class AuthService(BaseService):
 
 
     async def add_user(self, data: UserRequestAdd):
-        hashed_password = AuthService().hash_password( data.password )
-        new_user_data = UserAdd( email=data.email,
-            hashed_password=hashed_password
-        )
+        hashed_password = self.hash_password( data.password )
+        new_user_data = UserAdd( email=data.email, hashed_password=hashed_password)
         await self.db.users.add( new_user_data )
         await self.db.commit()
 
 
-    async def login_user(self, data: UserRequestAdd, response) :
+    async def login_user(self, data: UserRequestAdd) :
         user = await self.get_user_with_check(email = data.email)
         access_token = self.create_access_token( { "user_id": user.id})
 
         if not self.verify_password( data.password, user.hashed_password):
             raise IncorrectPasswordException
-
-        response.set_cookie( "access_token", access_token)
 
         return access_token
 
@@ -67,9 +63,6 @@ class AuthService(BaseService):
             raise UserNotFoundException
 
         return user
-
-    async def logout_user( self, response ):
-        response.delete_cookie( "access_token" )
 
 
     async def get_user_with_check(self, email: str) -> User:

@@ -28,11 +28,13 @@ async def login_user(
     db: DBDep,
 ):
     try:
-        access_token = await AuthService(db).login_user(data, response)
+        access_token = await AuthService(db).login_user(data)
     except UserNotFoundException:
         raise UserNotFoundHTTPException
     except IncorrectPasswordException:
         raise IncorrectPasswordHTTPException
+
+    response.set_cookie( "access_token", access_token)
 
     return {"access_token": access_token}
 

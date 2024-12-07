@@ -133,6 +133,10 @@ class FacilitiesNotFoundHTTPException(NabronirovalHTTPException):
     status_code = 404
     detail = 'Удобства отсутствуют'
 
+class NoAccessTokenHTTPException(NabronirovalHTTPException):
+    status_code = 401
+    detail = 'Вы не авторизованы'
+
 
 def check_date_to_after_date_from(date_from: date, date_to: date) -> None:
     if date_from >= date_to:

@@ -14,7 +14,7 @@ router = APIRouter(prefix="/facilities", tags=["удобства"])
 @cache(expire=10)
 async def get_facilities(db: DBDep):
     try:
-        return await db.facilities.get_all()
+        return await FacilitiyService(db).get_facilities()
     except FacilitiesNotFoundException:
         return FacilitiesNotFoundHTTPException
 
