@@ -1,11 +1,11 @@
 from datetime import date
 
-from src.exceptions import check_date_to_after_date_from
-from src.schemas.hotels import HotelAdd, HotelPATCH
+from src.exceptions import check_date_to_after_date_from, ObjectNotFoundException, HotelNotFoundException
+from src.schemas.hotels import HotelAdd, HotelPATCH, Hotel
 from src.services.base import BaseService
 
 
-class HotelServise(BaseService):
+class HotelService(BaseService):
     async  def get_filtered_by_time(
         self,
         pagination,
@@ -32,7 +32,7 @@ class HotelServise(BaseService):
 
 
     async  def get_hotel(self, hotel_id: int):
-        hotel = await self.db.hotels.get_exist_hotel( hotel_id=hotel_id )
+        hotel = await HotelService(self.db).get_hotel_with_check(hotel_id=hotel_id)
         return hotel
 
 
@@ -43,18 +43,25 @@ class HotelServise(BaseService):
 
 
     async  def edit_hotel(self, data: HotelAdd, hotel_id: int):
-        hotel = await self.db.hotels.get_exist_hotel( hotel_id=hotel_id )
+        hotel = await HotelService(self.db).get_hotel_with_check(hotel_id=hotel_id)
         await self.db.hotels.edit( data, id=hotel_id)
         await self.db.commit()
 
 
     async  def patch_hotel(self, data: HotelPATCH, hotel_id: int, exclude_unset: bool = False):
-        hotel = await self.db.hotels.get_exist_hotel( hotel_id=hotel_id )
+        hotel = await HotelService(self.db).get_hotel_with_check(hotel_id=hotel_id)
         await self.db.hotels.edit( data, exclude_unset=exclude_unset, id=hotel_id)
         await self.db.commit()
 
 
     async  def delete_hotel(self, hotel_id: int):
-        hotel = await self.db.hotels.get_exist_hotel( hotel_id=hotel_id )
+        hotel = await HotelService(self.db).get_hotel_with_check(hotel_id=hotel_id)
         await self.db.hotels.delete( id=hotel_id )
         await self.db.commit()
+
+
+    async def get_hotel_with_check(self, hotel_id: int) -> Hotel:
+        try:
+            return await self.db.hotels.get_one( hotel_id=hotel_id )
+        except ObjectNotFoundException:
+            raise HotelNotFoundException

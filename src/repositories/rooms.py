@@ -1,11 +1,10 @@
 from datetime import date
-from pydantic import ValidationError
 
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload, joinedload
 
-from src.exceptions import WrongDateOrderException, ObjectNotFoundException
+from src.exceptions import WrongDateOrderException, ObjectNotFoundException, RoomsNotFoundException, RoomNotFoundException
 from src.repositories.base import BaseRepository
 from src.models.rooms import RoomsOrm
 from src.repositories.mappers.mappers import RoomDataMapper, RoomDataWithRelsMapper
@@ -36,19 +35,24 @@ class RoomsRepository(BaseRepository):
             .filter(RoomsOrm.id.in_(rooms_ids_to_get))
         )
         result = await self.session.execute(query)
-        return [
-            RoomDataWithRelsMapper.map_to_domain_entity(model) for model in result.scalars().all()
-        ]  # .unique() нужен при joinedload
 
-    async def get_one_or_none_with_rels(self, **filter_by):
+        if result:
+            return [
+                RoomDataWithRelsMapper.map_to_domain_entity(model) for model in result.scalars().all()
+            ]  # .unique() нужен при joinedload
+        else:
+            raise RoomsNotFoundException
+
+    async def get_one_with_rels(self, **filter_by):
         query = select(self.model).options(joinedload(self.model.facilities)).filter_by(**filter_by)
 
         result = await self.session.execute(query)
         try:
-            model = result.unique().scalars().one_or_none()
+            model = result.unique().scalars().one()
             return RoomDataWithRelsMapper.map_to_domain_entity(model)
-        except ValidationError:
-            raise ObjectNotFoundException
+        except NoResultFound:
+            raise RoomNotFoundException
+
 
 
 

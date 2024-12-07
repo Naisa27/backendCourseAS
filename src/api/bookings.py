@@ -1,20 +1,28 @@
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body
 
 from src.api.dependencies import DBDep, UserIdDep
-from src.exceptions import ObjectNotFoundException, AllRoomsAreBookedException
-from src.schemas.bookings import BookingAdd, BookingAddRequest
+from src.exceptions import (AllRoomsAreBookedException, BookingsNotFoundException, BookingsNotFoundHTTPException,
+                            RoomNotFoundException, RoomNotFoundHTTPException, AllRoomsAreBookedHTTPException)
+from src.schemas.bookings import BookingAddRequest
+from src.services.bookings import BookingService
 
 router = APIRouter(prefix="/bookings", tags=["бронирования"])
 
 
 @router.get("", summary="получение всех бронирований")
 async def get_bookings(db: DBDep):
-    return await db.bookings.get_all()
+    try:
+        return await BookingService(db).get_bookings()
+    except BookingsNotFoundException:
+        raise BookingsNotFoundHTTPException
 
 
 @router.get("/me", summary="получение бронирований текущего пользователя")
 async def get_my_bookings(db: DBDep, user_id: UserIdDep):
-    return await db.bookings.get_filtered(user_id=user_id)
+    try:
+        return await BookingService(db).get_my_bookings(user_id)
+    except BookingsNotFoundException:
+        raise BookingsNotFoundHTTPException
 
 
 @router.post("", summary="добавление бронирования")
@@ -43,16 +51,10 @@ async def add_booking(
     ),
 ):
     try:
-        room = await db.rooms.get_one(id=booking_data.room_id)
-    except ObjectNotFoundException:
-        raise HTTPException(status_code=404, detail="Номер не найден")
-
-    room_price: int = room.price
-    _booking_data = BookingAdd(user_id=user_id, price=room_price, **booking_data.model_dump())
-    try:
-        booking = await db.bookings.add_booking(_booking_data, hotel_id=room.hotel_id)
+        booking = await BookingService(db).add_booking(user_id, booking_data)
+    except RoomNotFoundException:
+        raise RoomNotFoundHTTPException
     except AllRoomsAreBookedException as ex:
-        raise HTTPException(status_code=409, detail=ex.detail)
+        raise AllRoomsAreBookedHTTPException
 
-    await db.commit()
     return {"status": "OK", "data": booking}
